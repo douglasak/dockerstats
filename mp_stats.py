@@ -1,6 +1,7 @@
 import docker
 import multiprocessing as mp
-import json
+#import json
+#import random
 
 output = mp.Queue()
 client=docker.from_env()
@@ -28,9 +29,9 @@ for p in processes:
 
 while output.empty() is False:
 	result = output.get()
-	container_stats[result["name"]] = result
+	container_stats[result["name"][1:]] = result
 
-print(container_stats)
+#print(container_stats)
 
 # f = open('workfile', 'w')
 # json.dump(container_stats, f)

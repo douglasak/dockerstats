@@ -10,4 +10,4 @@ EXPOSE 57080
 VOLUME /usr/src/app
 WORKDIR /usr/src/app
 
-ENTRYPOINT ["python3", "hello.py"]
+ENTRYPOINT ["python3", "web.py"]
