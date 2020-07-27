@@ -1,0 +1,13 @@
+<html>
+<head>
+<title>Docker log - {{ name }}</title>
+<script>
+	function bottom() {
+		window.scroll(0, document.documentElement.scrollHeight)
+	}
+</script>
+</head>
+<body onLoad="bottom()">
+	<pre>{{ logs }}</pre>
+</body>
+</html>

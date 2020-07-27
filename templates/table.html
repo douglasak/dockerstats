@@ -1,0 +1,25 @@
+<html>
+<head>
+<title>Docker statistics</title>
+</head>
+<body>
+	<table>
+		<tr>
+			<td>Container</td>
+			<td>Memory usage</td>
+			<td>Memory limit</td>
+			<td>% used</td>
+		</tr>
+	    {% for container in sorted(containers) %}
+	    {% block container %}
+	    <tr>
+	       	<td><a href="logs?container={{ container }}">{{ container }}</a></td>
+	       	<td>{{ "{:,.1f}".format(containers[container]['memory_stats']['usage'] / 1048576) }}</td>
+	       	<td>{{ "{:,.1f}".format(containers[container]['memory_stats']['limit'] / 1048576) }}</td>
+	       	<td>{{ "{:.1%}".format(containers[container]['memory_stats']['usage']/containers[container]['memory_stats']['limit']) }}</td>
+	    </tr>
+	    {% end %}
+	    {% end %}
+    </table>
+</body>
+</html>
