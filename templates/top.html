@@ -1,0 +1,33 @@
+<html>
+<head>
+<title>Docker top - {{ name }}</title>
+</head>
+<body>
+	<h1>Docker top - {{ name }}</h1>
+	<table>
+		<tr>
+			<td>UID</td>
+			<td>PID</td>
+			<td>PPID</td>
+			<td>C</td>
+			<td>STIME</td>
+			<td>TTY</td>
+			<td>TIME</td>
+			<td>CMD</td>
+		</tr>
+	    {% for process in top["Processes"] %}
+	    {% block process %}
+		<tr>
+			<td>{{ process[0] }}</td>
+			<td>{{ process[1] }}</td>
+			<td>{{ process[2] }}</td>
+			<td>{{ process[3] }}</td>
+			<td>{{ process[4] }}</td>
+			<td>{{ process[5] }}</td>
+			<td>{{ process[6] }}</td>
+			<td>{{ process[7] }}</td>
+		</tr>
+		{% end %}
+	    {% end %}
+</body>
+</html>
