@@ -2,21 +2,40 @@
 <head>
 <title>Docker statistics</title>
 </head>
+<style>
+
+	a { color: blue; }
+	a:hover { color: lightblue; }
+	th { 
+		text-align: left;
+		background-color: lightgrey;
+	}
+	th:nth-child(n+2) { 
+		text-align: right;
+		background-color: lightgrey;
+	}
+	td:nth-child(n+2) { 
+		text-align: right;
+		padding-left: 75px; 
+	}
+	table { border-collapse: collapse; }
+
+</style>
 <body>
 	<table>
 		<tr>
-			<td>Container</td>
-			<td>Memory usage</td>
-			<td>Memory limit</td>
-			<td>% used</td>
+			<th>Container</th>
+			<th>Memory usage</th>
+			<th>Memory limit</th>
+			<th>% used</th>
 		</tr>
 	    {% for container in sorted(containers) %}
 	    {% block container %}
 	    <tr>
 	       	<td><a href="logs?container={{ container }}">{{ container }}</a></td>
-	       	<td>{{ "{:,.1f}".format(containers[container]['memory_stats']['usage'] / 1048576) }}</td>
+	       	<td>{{ "{:,.1f}".format(containers[container]['memory_stats']['stats']['rss'] / 1048576) }}</td>
 	       	<td>{{ "{:,.1f}".format(containers[container]['memory_stats']['limit'] / 1048576) }}</td>
-	       	<td>{{ "{:.1%}".format(containers[container]['memory_stats']['usage']/containers[container]['memory_stats']['limit']) }}</td>
+	       	<td>{{ "{:.1%}".format(containers[container]['memory_stats']['stats']['rss']/containers[container]['memory_stats']['limit']) }}</td>
 	    </tr>
 	    {% end %}
 	    {% end %}
