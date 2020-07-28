@@ -11,9 +11,8 @@ loader = tornado.template.Loader("./templates")
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         containers = get_stats()
-        #for container in sorted(containers):
-        #    self.write(container + " " + "%d %d" % (containers[container]["memory_stats"]["usage"], containers[container]["memory_stats"]["limit"]) + "\n<br>")
-        self.write(loader.load("table.html").generate(containers=containers))
+        attributes = get_attrs()
+        self.write(loader.load("table.html").generate(attributes=attributes,containers=containers,memory=total_memory(containers)))
 
     def write_error(self, status_code, **kwargs):
         self.write("Status Code %d" % (status_code) + "\n<br>")
@@ -25,15 +24,21 @@ class StatsHandler(tornado.web.RequestHandler):
 
 class LogsHandler(tornado.web.RequestHandler):
     def get(self):
+        container_name = self.get_argument("container")
+        container = client.containers.get(container_name)
+        self.write(loader.load("logs.html").generate(name=container_name,logs=container.logs(timestamps=True)))
+
+class TopHandler(tornado.web.RequestHandler):
+    def get(self):
         container_name= self.get_argument("container")
         container = client.containers.get(container_name)
-        #self.write(container.logs())
-        self.write(loader.load("logs.html").generate(name=container_name,logs=container.logs(timestamps=True)))
+        self.write(loader.load("top.html").generate(name=container_name,top=container.top()))
 
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/logs", LogsHandler),
+        (r"/top", TopHandler),
         (r"/stats", StatsHandler)
     ], debug=True)
 
@@ -44,7 +49,7 @@ def get_stats():
     container_stats = {}
 
     for container in client.containers.list():
-      container_names.append(container.name)
+        container_names.append(container.name)
 
     def docker_stats(server):
         client_lowlevel = docker.APIClient(base_url='unix://var/run/docker.sock')
@@ -53,11 +58,9 @@ def get_stats():
 
     processes = [mp.Process(target=docker_stats, args=(server,)) for server in container_names]
 
-    # Run processes
     for p in processes:
         p.start()
 
-    # Exit the completed processes
     for p in processes:
         p.join()
 
@@ -66,6 +69,20 @@ def get_stats():
         container_stats[result["name"][1:]] = result
 
     return container_stats
+
+def get_attrs():
+    container_attrs = {}
+
+    for container in client.containers.list():
+        container_attrs[container.name] = { "status":container.status, "id":container.short_id, "image":container.image }
+
+    return container_attrs
+
+def total_memory(containers):
+    memory = 0
+    for container in containers:
+        memory += containers[container]['memory_stats']['stats']['rss']
+    return memory
 
 if __name__ == "__main__":
     app = make_app()

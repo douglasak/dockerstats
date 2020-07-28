@@ -1,44 +1,81 @@
 <html>
 <head>
-<title>Docker statistics</title>
+<title>Docker container statistics</title>
 </head>
 <style>
 
+	body { font-family: Arial; }
 	a { color: blue; }
 	a:hover { color: lightblue; }
-	th { 
+	tr:first-of-type td { 
 		text-align: left;
 		background-color: lightgrey;
+		padding-top: 5px;
+		font-weight: bold;
+		border-bottom: 1px solid darkgrey;
 	}
-	th:nth-child(n+2) { 
+	td:nth-child(n+2):nth-child(-n+3) { /* An + B */
 		text-align: right;
-		background-color: lightgrey;
+		padding-left:45px;
 	}
-	td:nth-child(n+2) { 
+	td:nth-child(n+3):nth-child(-n+4) { /* An + B */
 		text-align: right;
-		padding-left: 75px; 
+		padding-left:75px;
+	}
+	td:nth-child(5) { /* An + B */
+		padding-left:75px;
+		text-align: left;
+		padding-right:75px;
+	}
+	td:nth-child(n+5) { /* An + B */
+		text-align: left;
+		padding-right:75px;
+	}
+	td {
+		padding-top: 7px;
+	}
+	tr:last-of-type td {
+		padding-bottom: 10px;
+		font-weight: bold;
+		border-bottom: 1px solid darkgrey;
 	}
 	table { border-collapse: collapse; }
 
 </style>
 <body>
+	<h1>Docker container statistics</h1>
 	<table>
 		<tr>
-			<th>Container</th>
-			<th>Memory usage</th>
-			<th>Memory limit</th>
-			<th>% used</th>
+			<td>Container</td>
+			<td>Memory usage (MiB)</td>
+			<td>Memory limit (MiB)</td>
+			<td>% used</td>
+			<td>Status</td>
+			<td>Short ID</td>
+			<td>Image</td>
 		</tr>
 	    {% for container in sorted(containers) %}
 	    {% block container %}
 	    <tr>
 	       	<td><a href="logs?container={{ container }}">{{ container }}</a></td>
-	       	<td>{{ "{:,.1f}".format(containers[container]['memory_stats']['stats']['rss'] / 1048576) }}</td>
+	       	<td><a href="top?container={{ container }}">{{ "{:,.1f}".format(containers[container]['memory_stats']['stats']['rss'] / 1048576) }}</a></td>
 	       	<td>{{ "{:,.1f}".format(containers[container]['memory_stats']['limit'] / 1048576) }}</td>
 	       	<td>{{ "{:.1%}".format(containers[container]['memory_stats']['stats']['rss']/containers[container]['memory_stats']['limit']) }}</td>
+	       	<td>{{ attributes[container]["status"] }}</td>
+	       	<td>{{ attributes[container]["id"] }}</td>
+	       	<td>{{ attributes[container]["image"] }}</td>
 	    </tr>
 	    {% end %}
 	    {% end %}
+	    <tr>
+	    	<td>Total</td>
+	    	<td>{{ "{:,.1f}".format(memory / 1048576) }}</td>
+	    	<td>{{ "{:,.1f}".format((1024*1024*1024*8) / 1048576) }}</td>
+	    	<td>{{ "{:,.1%}".format(memory / (1024*1024*1024*8)) }}</td>
+	    	<td></td>
+	    	<td></td>
+	    	<td></td>
+	    </tr>
     </table>
 </body>
 </html>
