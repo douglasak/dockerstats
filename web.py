@@ -1,6 +1,7 @@
 import tornado.ioloop
 import tornado.web
 import tornado.template
+import json
 
 import docker
 import multiprocessing as mp
@@ -10,9 +11,8 @@ loader = tornado.template.Loader("./templates")
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        containers = get_stats()
         attributes = get_attrs()
-        self.write(loader.load("table.html").generate(attributes=attributes,containers=containers,memory=total_memory(containers)))
+        self.write(loader.load("table.html").generate(attributes=attributes,memory=total_memory(attributes)))
 
     def write_error(self, status_code, **kwargs):
         self.write("Status Code %d" % (status_code) + "\n<br>")
@@ -34,12 +34,17 @@ class TopHandler(tornado.web.RequestHandler):
         container = client.containers.get(container_name)
         self.write(loader.load("top.html").generate(name=container_name,top=container.top()))
 
+class OutputHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write(get_attrs())
+
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/logs", LogsHandler),
         (r"/top", TopHandler),
-        (r"/stats", StatsHandler)
+        (r"/stats", StatsHandler),
+        (r"/output", OutputHandler)
     ], debug=True)
 
 def get_stats():
@@ -52,7 +57,7 @@ def get_stats():
         container_names.append(container.name)
 
     def docker_stats(server):
-        client_lowlevel = docker.APIClient(base_url='unix://var/run/docker.sock')
+        client_lowlevel = docker.APIClient(base_url="unix://var/run/docker.sock")
         client_stats=client_lowlevel.stats(container=server,decode=False,stream=False)
         output.put(client_stats)
 
@@ -72,16 +77,23 @@ def get_stats():
 
 def get_attrs():
     container_attrs = {}
+    container_stats = get_stats()
 
     for container in client.containers.list():
-        container_attrs[container.name] = { "status":container.status, "id":container.short_id, "image":container.image }
+        image_name = container.image.attrs["RepoTags"][0]
+        image_created = container.image.attrs["Created"]
+        container_attrs[container.name] = { "status": container.status, "id": container.short_id, "image": image_name, "image_created": image_created}
+
+    for container in container_stats:
+        container_attrs[container]["rss"] = container_stats[container]["memory_stats"]["stats"]["rss"]
+        container_attrs[container]["limit"] = container_stats[container]["memory_stats"]["limit"]
 
     return container_attrs
 
-def total_memory(containers):
+def total_memory(container_attrs):
     memory = 0
-    for container in containers:
-        memory += containers[container]['memory_stats']['stats']['rss']
+    for container in container_attrs:
+        memory += container_attrs[container]["rss"]
     return memory
 
 if __name__ == "__main__":
