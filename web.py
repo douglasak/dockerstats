@@ -25,6 +25,17 @@ class StatsHandler(tornado.web.RequestHandler):
     def get(self):
         self.write(get_stats())
 
+class ClientStatsHandler(tornado.web.RequestHandler):
+    def get(self):
+        container_name = self.get_argument("container")
+        container = client.containers.get(container_name)
+        self.write(container.stats(stream=False))
+
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
+
 class LogsHandler(tornado.web.RequestHandler):
     def get(self):
         container_name = self.get_argument("container")
@@ -53,6 +64,7 @@ def make_app():
         (r"/logs", LogsHandler),
         (r"/top", TopHandler),
         (r"/stats", StatsHandler),
+        (r"/client_stats", ClientStatsHandler),
         (r"/output", OutputHandler),
         (r"/attrs", AttrsHandler)
     ], debug=True)

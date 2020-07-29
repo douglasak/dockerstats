@@ -89,9 +89,9 @@
 	</table>
 	<script>
 
-	setInterval(function() { loadScript(); }, 10000);
+	//setInterval(function() { loadScript(); }, 10000);
 
-	function loadScript() {
+	/*function loadScript() {
 		$.getJSON( "/output", function(data) {
 			
 			keys = Object.keys(data);
@@ -113,7 +113,42 @@
 
 			}
 		});
+	}*/
+
+	var rowCount = $('#containers tr').length-2;
+
+	keys = { }
+
+	for (i=1; i<rowCount+1; i++) {
+		keys[$('#containers').find('tr:eq('+ i +')').find('td:eq(0)').text()] = i;
 	}
+
+	setInterval(function() {
+		randomRow = Math.floor(Math.random() * rowCount); 
+		container = $('#containers').find('tr:eq('+ (randomRow + 1) +')').find('td:eq(0)').text();
+		
+		$.getJSON( "/client_stats?container=" + container, function(data) {
+			
+			container_name = data["name"].slice(1)
+			key = keys[container_name]
+
+			rss = data["memory_stats"]["stats"]["rss"];
+			limit = data["memory_stats"]["limit"];
+			used = rss/limit;
+
+			console.log(container_name + " " + rss + " " + limit + " " + key)
+
+			rss /= (1024*1024)
+			limit /= (1024*1024)
+			used *= 100
+
+			$('#containers').find('tr:eq('+ key +')').find('td:eq(1)').html('<a href="top?container=' + container_name + '">' + formatNumber(rss.toFixed(1)) + '</a>')
+			$('#containers').find('tr:eq('+ key +')').find('td:eq(2)').html(formatNumber(limit.toFixed(1)))
+			$('#containers').find('tr:eq('+ key +')').find('td:eq(3)').html(used.toFixed(1) + "%")
+
+		});
+
+	}, 5000);
 
 	function formatNumber(num) {
   		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
