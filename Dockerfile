@@ -1,6 +1,8 @@
-FROM python:3
+FROM python:latest
 
 WORKDIR /usr/src/req
+
+#RUN apt update && apt upgrade -y
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt

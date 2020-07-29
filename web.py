@@ -1,10 +1,13 @@
 import tornado.ioloop
 import tornado.web
 import tornado.template
-import json
 
 import docker
+import yaml
 import multiprocessing as mp
+
+import time
+from dateutil.parser import parse
 
 client = docker.from_env()
 loader = tornado.template.Loader("./templates")
@@ -12,7 +15,7 @@ loader = tornado.template.Loader("./templates")
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         attributes = get_attrs()
-        self.write(loader.load("table.html").generate(attributes=attributes,memory=total_memory(attributes)))
+        self.write(loader.load("table.html").generate(attributes=attributes,memory=sum_memory(attributes),server_memory=server_memory()))
 
     def write_error(self, status_code, **kwargs):
         self.write("Status Code %d" % (status_code) + "\n<br>")
@@ -38,13 +41,20 @@ class OutputHandler(tornado.web.RequestHandler):
     def get(self):
         self.write(get_attrs())
 
+class AttrsHandler(tornado.web.RequestHandler):
+    def get(self):
+        container_name= self.get_argument("container")
+        container = client.containers.get(container_name)
+        self.write(container.attrs)
+
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/logs", LogsHandler),
         (r"/top", TopHandler),
         (r"/stats", StatsHandler),
-        (r"/output", OutputHandler)
+        (r"/output", OutputHandler),
+        (r"/attrs", AttrsHandler)
     ], debug=True)
 
 def get_stats():
@@ -81,8 +91,15 @@ def get_attrs():
 
     for container in client.containers.list():
         image_name = container.image.attrs["RepoTags"][0]
-        image_created = container.image.attrs["Created"]
-        container_attrs[container.name] = { "status": container.status, "id": container.short_id, "image": image_name, "image_created": image_created}
+        image_created = calc_age(container.image.attrs["Created"])
+        container_created = calc_age(container.attrs["Created"])
+        container_attrs[container.name] = { 
+            "status": container.status, 
+            "id": container.short_id, 
+            "image": image_name, 
+            "image_created": image_created,
+            "container_created": container_created
+        }
 
     for container in container_stats:
         container_attrs[container]["rss"] = container_stats[container]["memory_stats"]["stats"]["rss"]
@@ -90,11 +107,20 @@ def get_attrs():
 
     return container_attrs
 
-def total_memory(container_attrs):
+def sum_memory(container_attrs):
     memory = 0
     for container in container_attrs:
         memory += container_attrs[container]["rss"]
     return memory
+
+def calc_age(datetime):
+    timestamp = parse(datetime).timestamp()
+
+    return (time.time() - timestamp) / (3600*24)
+
+def server_memory():
+    with open(r"./config.yaml") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)["server_memory"]
 
 if __name__ == "__main__":
     app = make_app()

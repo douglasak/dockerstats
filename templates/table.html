@@ -54,9 +54,10 @@
 			<td>Limit (MiB)</td>
 			<td>% used</td>
 			<td>Status</td>
+			<td>Uptime</td>
 			<td>Short ID</td>
 			<td>Image</td>
-			<td>Age</td>
+			<td>Image Age</td>
 		</tr>
 	    {% for container in sorted(attributes) %}
 	    {% block container %}
@@ -66,17 +67,19 @@
 	       	<td>{{ "{:,.1f}".format(attributes[container]['limit'] / 1048576) }}</td>
 	       	<td>{{ "{:.1%}".format(attributes[container]['rss']/attributes[container]['limit']) }}</td>
 	       	<td>{{ attributes[container]["status"] }}</td>
+	       	<td>{{ "{:,.1f}".format(attributes[container]["container_created"]) }} days</td>
 	       	<td>{{ attributes[container]["id"] }}</td>
 	       	<td>{{ attributes[container]["image"] }}</td>
-	       	<td>{{ attributes[container]["image_created"] }}</td>
+	       	<td>{{ "{:,.1f}".format(attributes[container]["image_created"]) }} days</td>
 	    </tr>
 	    {% end %}
 	    {% end %}
 	    <tr>
 	    	<td>Total</td>
 	    	<td>{{ "{:,.1f}".format(memory / 1048576) }}</td>
-	    	<td>{{ "{:,.1f}".format((1024*1024*1024*8) / 1048576) }}</td>
-	    	<td>{{ "{:,.1%}".format(memory / (1024*1024*1024*8)) }}</td>
+	    	<td>{{ "{:,.1f}".format((1024*1024*1024*server_memory) / 1048576) }}</td>
+	    	<td>{{ "{:,.1%}".format(memory / (1024*1024*1024*server_memory)) }}</td>
+	    	<td></td>
 	    	<td></td>
 	    	<td></td>
 	    	<td></td>
