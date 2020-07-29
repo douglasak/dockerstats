@@ -1,6 +1,7 @@
 <html>
 <head>
 <title>Docker container statistics</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <style>
 	body { 
@@ -47,7 +48,7 @@
 </style>
 <body>
 	<h1>Docker container statistics</h1>
-	<table>
+	<table id="containers">
 		<tr>
 			<td>Container</td>
 			<td>Usage (MiB)</td>
@@ -57,34 +58,67 @@
 			<td>Uptime</td>
 			<td>Short ID</td>
 			<td>Image</td>
-			<td>Image Age</td>
+			<td>Image age</td>
 		</tr>
-	    {% for container in sorted(attributes) %}
-	    {% block container %}
-	    <tr>
-	       	<td><a href="logs?container={{ container }}">{{ container }}</a></td>
-	       	<td><a href="top?container={{ container }}">{{ "{:,.1f}".format(attributes[container]['rss'] / 1048576) }}</a></td>
-	       	<td>{{ "{:,.1f}".format(attributes[container]['limit'] / 1048576) }}</td>
-	       	<td>{{ "{:.1%}".format(attributes[container]['rss']/attributes[container]['limit']) }}</td>
-	       	<td>{{ attributes[container]["status"] }}</td>
-	       	<td>{{ "{:,.1f}".format(attributes[container]["container_created"]) }} days</td>
-	       	<td>{{ attributes[container]["id"] }}</td>
-	       	<td>{{ attributes[container]["image"] }}</td>
-	       	<td>{{ "{:,.1f}".format(attributes[container]["image_created"]) }} days</td>
-	    </tr>
-	    {% end %}
-	    {% end %}
-	    <tr>
-	    	<td>Total</td>
-	    	<td>{{ "{:,.1f}".format(memory / 1048576) }}</td>
-	    	<td>{{ "{:,.1f}".format((1024*1024*1024*server_memory) / 1048576) }}</td>
-	    	<td>{{ "{:,.1%}".format(memory / (1024*1024*1024*server_memory)) }}</td>
-	    	<td></td>
-	    	<td></td>
-	    	<td></td>
-	    	<td></td>
-	    	<td></td>
-	    </tr>
-    </table>
+		{% for container in sorted(attributes) %}
+		{% block container %}
+		<tr>
+			<td><a href="logs?container={{ container }}">{{ container }}</a></td>
+			<td><a href="top?container={{ container }}">{{ "{:,.1f}".format(attributes[container]['rss'] / (1024*1024)) }}</a></td>
+			<td>{{ "{:,.1f}".format(attributes[container]["limit"] / (1024*1024)) }}</td>
+			<td>{{ "{:.1%}".format(attributes[container]["rss"]/attributes[container]["limit"]) }}</td>
+			<td>{{ attributes[container]["status"] }}</td>
+			<td>{{ "{:,.1f}".format(attributes[container]["container_created"]) }} days</td>
+			<td>{{ attributes[container]["id"] }}</td>
+			<td>{{ attributes[container]["image"] }}</td>
+			<td>{{ "{:,.1f}".format(attributes[container]["image_created"]) }} days</td>
+		</tr>
+		{% end %}
+		{% end %}
+		<tr>
+			<td>Total</td>
+			<td>{{ "{:,.1f}".format(memory / (1024*1024)) }}</td>
+			<td>{{ "{:,.1f}".format((1024*1024*1024*server_memory) / (1024*1024)) }}</td>
+			<td>{{ "{:,.1%}".format(memory / (1024*1024*1024*server_memory)) }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	</table>
+	<script>
+
+	setInterval(function() { loadScript(); }, 10000);
+
+	function loadScript() {
+		$.getJSON( "/output", function(data) {
+			
+			keys = Object.keys(data);
+			keys.sort(); 
+
+			for (i = 0; i < keys.length; i++) {
+
+				rss = data[keys[i]]["rss"];
+				limit = data[keys[i]]["limit"];
+				used = rss/limit;
+
+				rss /= (1024*1024)
+				limit /= (1024*1024)
+				used *= 100
+
+				$('#containers').find('tr:eq('+ (i+1) +')').find('td:eq(1)').html('<a href="top?container=' + keys[i] + '">' + formatNumber(rss.toFixed(1)) + '</a>')
+				$('#containers').find('tr:eq('+ (i+1) +')').find('td:eq(2)').html(formatNumber(limit.toFixed(1)))
+				$('#containers').find('tr:eq('+ (i+1) +')').find('td:eq(3)').html(used.toFixed(1) + "%")
+
+			}
+		});
+	}
+
+	function formatNumber(num) {
+  		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+	}
+
+	</script>
 </body>
 </html>
