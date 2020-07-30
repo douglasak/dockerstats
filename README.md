@@ -11,6 +11,5 @@ services:
     container_name: dockerstats
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /volume1/docker/dockerstats:/usr/src/app
     restart: unless-stopped
 ```
