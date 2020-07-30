@@ -2,6 +2,7 @@
 <head>
 <title>Docker container statistics</title>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/color/jquery.color-2.1.2.min.js"></script>
 </head>
 <style>
 	body { 
@@ -136,13 +137,14 @@
 			limit = data["memory_stats"]["limit"];
 			used = rss/limit;
 
-			console.log(container_name + " " + rss + " " + limit + " " + key)
+			//console.log(container_name + " " + rss + " " + limit + " " + key)
 
 			rss /= (1024*1024)
 			limit /= (1024*1024)
 			used *= 100
 
 			$('#containers').find('tr:eq('+ key +')').find('td:eq(1)').html('<a href="top?container=' + container_name + '">' + formatNumber(rss.toFixed(1)) + '</a>')
+			fadeCell($('#containers').find('tr:eq('+ key +')').find('td:eq(1)'))
 			$('#containers').find('tr:eq('+ key +')').find('td:eq(2)').html(formatNumber(limit.toFixed(1)))
 			$('#containers').find('tr:eq('+ key +')').find('td:eq(3)').html(used.toFixed(1) + "%")
 
@@ -151,7 +153,15 @@
 	}, 5000);
 
 	function formatNumber(num) {
-  		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+		return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+	}
+
+	function fadeCell(cell) {
+		cell.css('background-color', 'lightblue');
+		cell.animate({
+			backgroundColor: "white",
+		}, 2500, function() {
+		});
 	}
 
 	</script>
