@@ -90,32 +90,6 @@
 	</table>
 	<script>
 
-	//setInterval(function() { loadScript(); }, 10000);
-
-	/*function loadScript() {
-		$.getJSON( "/output", function(data) {
-			
-			keys = Object.keys(data);
-			keys.sort(); 
-
-			for (i = 0; i < keys.length; i++) {
-
-				rss = data[keys[i]]["rss"];
-				limit = data[keys[i]]["limit"];
-				used = rss/limit;
-
-				rss /= (1024*1024)
-				limit /= (1024*1024)
-				used *= 100
-
-				$('#containers').find('tr:eq('+ (i+1) +')').find('td:eq(1)').html('<a href="top?container=' + keys[i] + '">' + formatNumber(rss.toFixed(1)) + '</a>')
-				$('#containers').find('tr:eq('+ (i+1) +')').find('td:eq(2)').html(formatNumber(limit.toFixed(1)))
-				$('#containers').find('tr:eq('+ (i+1) +')').find('td:eq(3)').html(used.toFixed(1) + "%")
-
-			}
-		});
-	}*/
-
 	var rowCount = $('#containers tr').length-2;
 
 	keys = { }
@@ -148,6 +122,8 @@
 			$('#containers').find('tr:eq('+ key +')').find('td:eq(2)').html(formatNumber(limit.toFixed(1)))
 			$('#containers').find('tr:eq('+ key +')').find('td:eq(3)').html(used.toFixed(1) + "%")
 
+			sumTotal();
+
 		});
 
 	}, 5000);
@@ -162,6 +138,26 @@
 			backgroundColor: "white",
 		}, 2500, function() {
 		});
+	}
+
+	function sumTotal() {
+
+		sumUsage = 0
+
+		for (i=1; i<rowCount+1; i++) {
+		
+			sumUsage += parseFloat($('#containers').find('tr:eq('+ i +')').find('td:eq(1)').text().replace(/,/g, ''));
+
+		}
+
+		limit = parseFloat($('#containers').find('tr:eq('+ (rowCount+1) +')').find('td:eq(2)').text().replace(/,/g, ''));
+
+		used = sumUsage / limit;
+		used *= 100;
+
+		$('#containers').find('tr:eq('+ (rowCount+1) +')').find('td:eq(1)').html(formatNumber(sumUsage.toFixed(1)))
+		$('#containers').find('tr:eq('+ (rowCount+1) +')').find('td:eq(3)').html(used.toFixed(1) + "%")
+
 	}
 
 	</script>
