@@ -1,0 +1,7 @@
+.git/
+@eaDir
+.dockerignore
+.DS_Store
+.gitignore
+Dockerfile
+README.md
