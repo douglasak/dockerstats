@@ -7,7 +7,7 @@ Sample docker-compose file:
 version: "2.1"
 services:
   dockerstats:
-    build: .
+    image: douglasak/dockerstats:latest
     container_name: dockerstats
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
