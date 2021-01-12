@@ -67,7 +67,7 @@ def make_app():
         (r"/client_stats", ClientStatsHandler),
         (r"/output", OutputHandler),
         (r"/attrs", AttrsHandler)
-    ], debug=True)
+    ], debug=False)
 
 def get_stats():
     output = mp.Queue()
