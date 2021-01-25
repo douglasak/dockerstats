@@ -3,7 +3,7 @@ import tornado.web
 import tornado.template
 
 import docker
-import yaml
+#import yaml
 import multiprocessing as mp
 
 import time
@@ -24,6 +24,10 @@ class MainHandler(tornado.web.RequestHandler):
 class StatsHandler(tornado.web.RequestHandler):
     def get(self):
         self.write(get_stats())
+
+class InfoHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write(client.info())
 
 class ClientStatsHandler(tornado.web.RequestHandler):
     def get(self):
@@ -66,7 +70,8 @@ def make_app():
         (r"/stats", StatsHandler),
         (r"/client_stats", ClientStatsHandler),
         (r"/output", OutputHandler),
-        (r"/attrs", AttrsHandler)
+        (r"/attrs", AttrsHandler),
+        (r"/info", InfoHandler)
     ], debug=False)
 
 def get_stats():
@@ -131,8 +136,9 @@ def calc_age(datetime):
     return (time.time() - timestamp) / (3600*24)
 
 def server_memory():
-    with open(r"./config.yaml") as file:
-        return yaml.load(file, Loader=yaml.FullLoader)["server_memory"]
+    #with open(r"./config.yaml") as file:
+    #    return yaml.load(file, Loader=yaml.FullLoader)["server_memory"]
+    return client.info()["MemTotal"]/(1024*1024*1024)
 
 if __name__ == "__main__":
     app = make_app()

@@ -1,4 +1,3 @@
 docker
 tornado
-pyyaml
 python-dateutil
