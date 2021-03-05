@@ -7,6 +7,8 @@ import docker
 import multiprocessing as mp
 
 import time
+import os
+import configparser
 from dateutil.parser import parse
 
 client = docker.from_env()
@@ -62,6 +64,29 @@ class AttrsHandler(tornado.web.RequestHandler):
         container = client.containers.get(container_name)
         self.write(container.attrs)
 
+class URHandler(tornado.web.RequestHandler):
+    def get(self):
+        cpuload = configparser.ConfigParser()
+        cpuload.read('/emhttp/cpuload.ini')
+        disk_file = open("/emhttp/disks.ini", "r")
+        disk_info = disk_file.read().replace("\"","")
+        disks = configparser.ConfigParser()
+        disks.read_string(disk_info)
+        cache_lbas = int(os.popen("cat /emhttp/smart/cache | grep '241 Total_LBAs_Written' | grep -Eo '[0-9]+$' | tr -d '\n'").read())
+        tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+        uptime = float(os.popen("awk '{print $1}' /proc/uptime | tr -d '\n'").read())
+        cpu_temp = float(os.popen("cat /sys/class/thermal/thermal_zone2/temp | tr -d '\n'").read())/1000
+        mb_temp = float(os.popen("cat /sys/class/thermal/thermal_zone0/temp | tr -d '\n'").read())/1000
+
+        output = {
+          "cpuload": cpuload._sections,
+          "disks": disks._sections,
+          "cache": {"lbas_written": cache_lbas},
+          "memory": {"total": tot_m, "used": used_m, "free": free_m},
+          "system": {"uptime": uptime, "cpu_temp": cpu_temp, "mb_temp": mb_temp}
+        }
+        self.write(output)
+
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
@@ -71,8 +96,9 @@ def make_app():
         (r"/client_stats", ClientStatsHandler),
         (r"/output", OutputHandler),
         (r"/attrs", AttrsHandler),
-        (r"/info", InfoHandler)
-    ], debug=False)
+        (r"/info", InfoHandler),
+        (r"/ur", URHandler)
+    ], debug=(os.environ.get('DEBUG') == 'true'))
 
 def get_stats():
     output = mp.Queue()
