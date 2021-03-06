@@ -3,7 +3,6 @@ import tornado.web
 import tornado.template
 
 import docker
-#import yaml
 import multiprocessing as mp
 
 import time
@@ -72,6 +71,16 @@ class URHandler(tornado.web.RequestHandler):
         disk_info = disk_file.read().replace("\"","")
         disks = configparser.ConfigParser()
         disks.read_string(disk_info)
+        
+        sda_r = int(os.popen("sed -n '/^sda/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $1}'").read().replace("\n",""))
+        sda_w = int(os.popen("sed -n '/^sda/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $2}'").read().replace("\n",""))
+        sdb_r = int(os.popen("sed -n '/^sdb/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $1}'").read().replace("\n",""))
+        sdb_w = int(os.popen("sed -n '/^sdb/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $2}'").read().replace("\n",""))
+        sdc_r = int(os.popen("sed -n '/^sdc/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $1}'").read().replace("\n",""))
+        sdc_w = int(os.popen("sed -n '/^sdc/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $2}'").read().replace("\n",""))
+        sdd_r = int(os.popen("sed -n '/^sdd/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $1}'").read().replace("\n",""))
+        sdd_w = int(os.popen("sed -n '/^sdd/p' /emhttp/diskload.ini | awk -F '=' '{print $2}' | awk '{print $2}'").read().replace("\n",""))
+
         cache_lbas = int(os.popen("cat /emhttp/smart/cache | grep '241 Total_LBAs_Written' | grep -Eo '[0-9]+$' | tr -d '\n'").read())
         tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
         uptime = float(os.popen("awk '{print $1}' /proc/uptime | tr -d '\n'").read())
@@ -81,6 +90,7 @@ class URHandler(tornado.web.RequestHandler):
         output = {
           "cpuload": cpuload._sections,
           "disks": disks._sections,
+          "diskload": {"sda_r": sda_r, "sda_w": sda_w, "sdb_r": sdb_r, "sdb_w": sdb_w, "sdc_r": sdc_r, "sdc_w": sdc_w, "sdd_r": sdd_r, "sdd_w": sdd_w},
           "cache": {"lbas_written": cache_lbas},
           "memory": {"total": tot_m, "used": used_m, "free": free_m},
           "system": {"uptime": uptime, "cpu_temp": cpu_temp, "mb_temp": mb_temp}
@@ -162,8 +172,6 @@ def calc_age(datetime):
     return (time.time() - timestamp) / (3600*24)
 
 def server_memory():
-    #with open(r"./config.yaml") as file:
-    #    return yaml.load(file, Loader=yaml.FullLoader)["server_memory"]
     return client.info()["MemTotal"]/(1024*1024*1024)
 
 if __name__ == "__main__":
